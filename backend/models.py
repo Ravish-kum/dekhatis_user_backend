@@ -287,6 +287,56 @@ class Wood_Servicing_table(models.Model):
     class Meta:
         db_table = 'wood_servicing_table'
 
+class Query_CRM_table(models.Model):
+    customer_id=models.CharField(max_length=20,null=True, blank=True)
+    customer_count=models.ImageField(null=True, blank=True)
+    shop_id=models.CharField(max_length=20,null=True, blank=True)
+    shop_count=models.IntegerField(null=True, blank=True)
+    item_id=models.CharField(max_length=20,null=True, blank=True)
+    item_count=models.IntegerField(null=True, blank=True)
+    checkout_pincode=models.IntegerField(null=True, blank=True)
+    checkout_pincode_count=models.IntegerField(null=True, blank=True)
+    category=models.CharField(max_length=20,null=True, blank=True)
+    category_count=models.IntegerField(null=True, blank=True)
+    item_cost=models.IntegerField(null=True, blank=True)
+    item_cost_count=models.IntegerField(null=True, blank=True)
+    month = models.CharField(max_length=50,null=True, blank=True)
+    month_count=models.IntegerField(null=True, blank=True)
+    week=models.CharField(max_length=20,null=True, blank=True)
+    week_count=models.IntegerField(null=True, blank=True)
+    time=models.CharField(max_length=50,null=True, blank=True)
+    time_count= models.IntegerField(null=True, blank=True)
+    
+    class Meta :
+        db_table ='query_CRM_table'
+
+class Serving_CRM_table(models.Model):
+    searches=models.CharField(max_length=20,null=True, blank=True)
+    searches_count=models.IntegerField(null=True, blank=True)
+    category_cost=models.IntegerField(null=True, blank=True)
+    category_count=models.IntegerField(null=True, blank=True)
+    price_item_view= models.CharField(max_length=50,null=True, blank=True)
+    price_item_view_count=models.IntegerField(null=True, blank=True)
+    colour_item_view=models.CharField(max_length=20,null=True, blank=True)
+    colour_item_view_count=models.IntegerField(null=True, blank=True)
+    description_view= models.CharField(max_length=50,null=True, blank=True)
+    description_view_count=models.IntegerField(null=True, blank=True)
+    class Meta:
+        db_table='serving_CRM_table'
+ 
+class User_CRM_table(models.Model):
+    age = models.CharField(max_length=20,null=True, blank=True)
+    age_count=models.IntegerField(null=True, blank=True)
+    gender= models.CharField(max_length=50,null=True, blank=True)
+    gender_count=models.IntegerField(null=True, blank=True)
+    income_level=models.CharField(max_length=50,null=True, blank=True)
+    income_level_count=models.IntegerField(null=True, blank=True)
+    pincode= models.CharField(max_length=50,null=True, blank=True)
+    pincode_count=models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        db_table='user_CRM_table'
+
 class UserManager(BaseUserManager):
 
     def _create_user(self, username, email, password, is_staff, is_superuser, **extra_fields):

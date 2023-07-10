@@ -1,6 +1,6 @@
 
 from rest_framework import serializers
-from .models import Product, Customer_table, Shop_table, Query_table,Cancellations_table,Review_table,User, ThemeFurnituresBookings, ThemeFurniture, Wood_Servicing_table
+from .models import Product, Customer_table, Shop_table, Query_table,Cancellations_table,Review_table,User, ThemeFurnituresBookings, ThemeFurniture, Wood_Servicing_table, Serving_CRM_table, Query_CRM_table,User_CRM_table
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -161,3 +161,23 @@ class Wood_Servicing_Serializer(serializers.ModelSerializer):
     class Meta:
         model = Wood_Servicing_table
         fields = '__all__'
+
+class Serving_CRM_Serializer(serializers.ModelSerializer):
+
+    class Meta:
+        models = Serving_CRM_table
+        fields= '__all__'
+
+
+class Query_CRM_Serializer(serializers.ModelSerializer):
+
+    class Meta:
+        models = Query_CRM_table
+        fields= '__all__'
+
+
+class User_CRM_Serializer(serializers.ModelSerializer):
+
+    class Meta:
+        models = User_CRM_table
+        fields= '__all__'

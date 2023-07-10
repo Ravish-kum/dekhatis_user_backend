@@ -25,6 +25,7 @@ import logging, traceback
 logger = logging.getLogger('my_web')
 from decimal import Decimal
 import random
+from .task import sleep_time
 #===============================================================================================================================================================
 #==============================================================authentications==================================================================================
 ''' function used for fetching jwt access and refresh tokens from authentications headers '''
@@ -212,6 +213,7 @@ class Gettingproducts(generics.ListAPIView):
 
 class GettingDescription(generics.ListAPIView):
     def get(self, request, myid):
+
         getting_the_clicked_product = Product.objects.filter(item_id=str(myid)).exclude(item_availability='deleted')
         try:
             print(getting_the_clicked_product)
@@ -462,6 +464,7 @@ def themebooking(theme_placing_id_dict, theme_id,customer_id, theme_shop_id_list
     customer is created to one responsible for booking done by the user'''
 
 class CustomerCreations(APIView):
+
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
     def get(self, request):
@@ -1056,10 +1059,9 @@ class Reviews(APIView):
             return Response({"message":"invalid try","status_code":400})
     
     #==========================================================================================================================================================
-    #================================================================woodservicing=============================================================================
+    #================================================================CRM control================================================================================
 
-    class WoodServicing(APIView):
-        def get(self,request):
-
-            pass
+class CRM_control(APIView):
+    def query_crm():
         pass
+    

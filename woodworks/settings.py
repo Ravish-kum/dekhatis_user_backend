@@ -153,6 +153,7 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+## Jwt authentications settings
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
@@ -188,11 +189,13 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173"
 ]
 
+
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
    
 ]
 
+#logger settings
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -226,9 +229,19 @@ LOGGING = {
 
 
 MEDIA_URL='/images/'
+MEDIA_ROOT= BASE_DIR
 
+
+#cronsjob settings
 CRONJOBS = [
     ('0 0 * * 0', 'myapp.management.commands.export_to_csv')
 ]
 
-MEDIA_ROOT= BASE_DIR
+#celery settings
+
+CELERY_BROKER_URL='redis://default:OohtwjQZ3J4cYtv3Jqfx@containers-us-west-74.railway.app:6520'
+
+CELERY_ACCEPT_CONTENT=['json']
+
+CELERY_TASK_SERIALIZER='json'
+
