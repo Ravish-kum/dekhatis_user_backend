@@ -165,19 +165,19 @@ class Wood_Servicing_Serializer(serializers.ModelSerializer):
 class Serving_CRM_Serializer(serializers.ModelSerializer):
 
     class Meta:
-        models = Serving_CRM_table
+        model = Serving_CRM_table
         fields= '__all__'
 
 
 class Query_CRM_Serializer(serializers.ModelSerializer):
 
     class Meta:
-        models = Query_CRM_table
+        model = Query_CRM_table
         fields= '__all__'
 
 
 class User_CRM_Serializer(serializers.ModelSerializer):
 
     class Meta:
-        models = User_CRM_table
+        model = User_CRM_table
         fields= '__all__'

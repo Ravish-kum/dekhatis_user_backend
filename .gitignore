@@ -1,8 +1,6 @@
 
 backend/__pycache__/
 backend/migrations/__pycache__/
-merchant_backend/__pycache__/
-merchant_backend/migrations/__pycache__/
 utils/__pycache__/
 woodworks/__pycache__/
 .gitignore/

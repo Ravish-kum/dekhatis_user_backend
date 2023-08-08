@@ -289,7 +289,7 @@ class Wood_Servicing_table(models.Model):
 
 class Query_CRM_table(models.Model):
     customer_id=models.CharField(max_length=20,null=True, blank=True)
-    customer_count=models.ImageField(null=True, blank=True)
+    customer_count=models.IntegerField(null=True, blank=True)
     shop_id=models.CharField(max_length=20,null=True, blank=True)
     shop_count=models.IntegerField(null=True, blank=True)
     item_id=models.CharField(max_length=20,null=True, blank=True)
@@ -298,7 +298,7 @@ class Query_CRM_table(models.Model):
     checkout_pincode_count=models.IntegerField(null=True, blank=True)
     category=models.CharField(max_length=20,null=True, blank=True)
     category_count=models.IntegerField(null=True, blank=True)
-    item_cost=models.IntegerField(null=True, blank=True)
+    item_cost=models.CharField(max_length=100,null=True, blank=True)
     item_cost_count=models.IntegerField(null=True, blank=True)
     month = models.CharField(max_length=50,null=True, blank=True)
     month_count=models.IntegerField(null=True, blank=True)
@@ -313,12 +313,13 @@ class Query_CRM_table(models.Model):
 class Serving_CRM_table(models.Model):
     searches=models.CharField(max_length=20,null=True, blank=True)
     searches_count=models.IntegerField(null=True, blank=True)
-    category_cost=models.IntegerField(null=True, blank=True)
+    category=models.CharField(max_length=20,null=True, blank=True)
     category_count=models.IntegerField(null=True, blank=True)
     price_item_view= models.CharField(max_length=50,null=True, blank=True)
     price_item_view_count=models.IntegerField(null=True, blank=True)
-    colour_item_view=models.CharField(max_length=20,null=True, blank=True)
-    colour_item_view_count=models.IntegerField(null=True, blank=True)
+    cart_items=models.CharField(max_length=50,null=True, blank=True)
+    cart_items_count=models.IntegerField(null=True, blank=True)
+    checkout_view_count=models.IntegerField(null=True, blank=True)
     description_view= models.CharField(max_length=50,null=True, blank=True)
     description_view_count=models.IntegerField(null=True, blank=True)
     class Meta:

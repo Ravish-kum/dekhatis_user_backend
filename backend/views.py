@@ -1,6 +1,6 @@
 from rest_framework.permissions import IsAuthenticated, AllowAny
 import json
-from .models import User, Product, Images_table, Customer_table,Query_table, Review_table,ThemeFurnituresBookings,ThemeFurniture, Shop_table, Wood_Servicing_table
+from .models import User, Product, Images_table, Customer_table,Query_table, Review_table,ThemeFurnituresBookings,ThemeFurniture, Shop_table, Wood_Servicing_table, User_CRM_table, Serving_CRM_table
 import uuid
 from django.conf import settings
 from django.core import serializers
@@ -17,7 +17,7 @@ from django.contrib.auth import authenticate, logout, login,get_user_model
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import ProductSerializer, UserSerializer, VariantSerializer, VisualSerializer, SearchSerializer, ClickedSerializer,Wood_Servicing_Serializer,CustomerSerializer,  QuerySerializer,QuerySerializer,CancellationsSerializer, ReviewSerializer,ThemeSerializer,ThemeBookingSerializer
+from .serializers import ProductSerializer, UserSerializer, VariantSerializer, VisualSerializer, SearchSerializer, ClickedSerializer,Wood_Servicing_Serializer,CustomerSerializer,  QuerySerializer,QuerySerializer,CancellationsSerializer, ReviewSerializer,ThemeSerializer,ThemeBookingSerializer, User_CRM_Serializer, Serving_CRM_Serializer
 User = get_user_model()
 from django.db.models import Q
 from django.utils import timezone
@@ -25,7 +25,9 @@ import logging, traceback
 logger = logging.getLogger('my_web')
 from decimal import Decimal
 import random
-from .task import sleep_time
+from .task import query_crm, serving_CRM_count
+from django.db.models import F
+
 #===============================================================================================================================================================
 #==============================================================authentications==================================================================================
 ''' function used for fetching jwt access and refresh tokens from authentications headers '''
@@ -308,6 +310,12 @@ class GettingDescription(generics.ListAPIView):
         if images_url:
             del images_url[0:3]
         logger.info("successfully got images url")
+        crm_param=getting_the_clicked_product.values()
+        serving_CRM_count(category=crm_param[0]['item_categories'])
+        serving_CRM_count(cost=crm_param[0]['item_cost'])
+        serving_CRM_count(item_id_for_desc=crm_param[0]['item_id'])
+    
+        
         
     #here we get urls of side images of products to display 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -332,6 +340,7 @@ class GettingDescription(generics.ListAPIView):
 
 class ProductSearch(APIView):
     def get(self, request, clicked_id):
+        serving_CRM_count(category=clicked_id)
         # clicked_id = request.query_params.get('clicked_id')
         try:
             product1 = Product.objects.filter(item_categories=clicked_id).exclude(item_availability='deleted').first()
@@ -342,7 +351,7 @@ class ProductSearch(APIView):
             product = Product.objects.filter(item_categories=clicked_id).exclude(item_availability='deleted')
             serializer = ClickedSerializer(product, many=True)
             logger.info("successfully got clicked product")
-
+            
             return Response({"message":"products by id clicked on icons",'clicked': serializer.data,'status_code':200})
         except Exception as e:
             logger.info('failed to get products from click - error %s',str(e))
@@ -352,6 +361,7 @@ class ProductSearch(APIView):
 
     def post(self, request):
         categoryfilter = request.data.get('searched_id')
+        serving_CRM_count(search = categoryfilter)
         try:
             productcheck = Product.objects.filter(item_name__icontains=categoryfilter).exclude(item_availability='deleted').first()
             if productcheck is None:
@@ -361,6 +371,7 @@ class ProductSearch(APIView):
                 product = Product.objects.filter(item_name__icontains=categoryfilter).exclude(item_availability='deleted')
                 serializer = SearchSerializer(product, many=True)
                 logger.info("successfully got searched product")
+                
             return Response({"message":"products by searched on search bar",'searched': serializer.data,'status_code':200})
         except Exception as e:
             logger.info('failed to get products from search - error %s',str(e))
@@ -371,6 +382,7 @@ class ProductSearch(APIView):
 
 class Roomfilters(APIView):
     def get(self,request,room):
+        serving_CRM_count(category=room)
         try:
             product_by_room = Product.objects.filter(item_room=room).exclude(item_availability='deleted').first()
             if product_by_room is None:
@@ -502,7 +514,7 @@ class CustomerCreations(APIView):
         if not payload:
             logger.info('failed to get payload')
             return Response({'error': 'Customer ID not found in token payload',"status_code":401}, status=status.HTTP_401_UNAUTHORIZED)
-
+        serving_CRM_count(checkout_view_count=True)
         already_exist = Customer_table.objects.filter(customer_id=payload).exists()
 
         if already_exist:
@@ -533,7 +545,13 @@ class CustomerCreations(APIView):
             else:
                 logger.info('server error %s',customer_serializer.errors)
                 return Response({"error":customer_serializer.errors,"status_code":400}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+
+@csrf_exempt
+def customercreations(request):
+    view = CustomerCreations.as_view()
+    response = view(request)
+    return response
 #=================================================================================================================================================================
 #==============================================================checkout============================================================================================
 ''' 
@@ -757,6 +775,14 @@ class Checkout(APIView):
                 logger.info('server error %s',str(serializer.errors))
                 return Response({"error":serializer.errors,"status_code":400}, status=status.HTTP_400_BAD_REQUEST)
             
+            query_crm(item_id=serializer['item_id'].value)
+            query_crm(shop_id=serializer['shop_id']['id'].value)
+            query_crm(category= serializer['item_categories'].value)
+            query_crm(item_cost=serializer['item_cost'].value)
+            query_crm(date_time=datetime.datetime.now())
+            query_crm(checkout_pincode=serializer['shop_pin'].value)
+            query_crm(customer_id=str(customer_id))
+       
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------
         if theme_id is not None:
             themebooking(theme_placing_id_dict,theme_id,customer_id,theme_shop_id_list)
@@ -773,6 +799,7 @@ class Checkout(APIView):
         else:
             error_found = None
         
+        
         logger.info("successfully booked all items")
         return Response(
             {'customer': customer_identity,
@@ -783,11 +810,6 @@ class Checkout(APIView):
         )
 
 
-@csrf_exempt
-def customercreations(request):
-    view = CustomerCreations.as_view()
-    response = view(request)
-    return response
 #=====================================================================================================================================================================
 # function serve_image works to get url and have a pic from that directory
 
@@ -1057,11 +1079,34 @@ class Reviews(APIView):
         else :
             logger.info('some thing went worng in setting review')
             return Response({"message":"invalid try","status_code":400})
-    
-    #==========================================================================================================================================================
-    #================================================================CRM control================================================================================
 
-class CRM_control(APIView):
-    def query_crm():
-        pass
+
+
+
+
+
+from backend.task import serving_CRM_count, User_CRM_count
+def CRM_Cart_item_call(request,cart_item_id=None):
+    try:
+        serving_CRM_count(item_id_for_cart=cart_item_id)
+    except Exception as e :
+        print(e)
+    return HttpResponse('success')
+
+
     
+def CRM_User_call(request):
+    age= request.GET.get('age')
+    gender= request.GET.get('gender')
+    income_level= request.GET.get('income_level')
+    pincode= request.GET.get('pincode')
+    if age:
+        User_CRM_count(age=age)
+    elif gender:
+        print(gender)
+        User_CRM_count(gender=gender)
+    elif income_level:
+        User_CRM_count(income_level=income_level)
+    else:
+        User_CRM_count(pincode=pincode)
+    return HttpResponse('success')

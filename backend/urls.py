@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import Signin, ForgotPassword, Gettingproducts,GettingDescription, ProductSearch,serve_image, Profile, Roomfilters, Cancellations,Reviews, ThemeDisplay,ThemeDiscriptionsDisplay,ThemeCancellations,Checkout
+from .views import Signin, ForgotPassword, Gettingproducts,GettingDescription, ProductSearch,serve_image, Profile, Roomfilters, Cancellations,Reviews, ThemeDisplay,ThemeDiscriptionsDisplay,ThemeCancellations,Checkout,CRM_Cart_item_call, CRM_User_call
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -33,6 +33,9 @@ urlpatterns = [
     path('reviews/<str:get_id>',Reviews.as_view() ,name='reviews'),
 
     path('checkout/',Checkout.as_view() ,name='checkout'),
+
+    path('cart_crm/<str:cart_item_id>',views.CRM_Cart_item_call,name= 'cart_crm'),
+    path('user_crm/',views.CRM_User_call,name= 'user_crm'),
 ]
 
 
