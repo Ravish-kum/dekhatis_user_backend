@@ -71,7 +71,7 @@ def time_range(date_time):
  #============================================================================================================================================================
 
 @shared_task
-def query_crm(shop_id=None, item_id=None, category=None, item_cost=None, date_time=None, checkout_pincode=None, customer_id=None):
+def query_crm(shop_id=None, item_id=None, category=None, item_cost=None, date_time=None, checkout_pincode=None, customer_id=None, theme_id= None):
     print('his')
     if shop_id:
         print('save')
@@ -149,9 +149,7 @@ def query_crm(shop_id=None, item_id=None, category=None, item_cost=None, date_ti
                 query_object.save()
     
     elif date_time:
-        print(week_name(date_time))
-        print(month_name(date_time))
-        print(time_range(date_time))
+    
         query_object_month = Query_CRM_table.objects.filter(month=month_name(date_time)).first()
         
         if query_object_month:
@@ -225,10 +223,31 @@ def query_crm(shop_id=None, item_id=None, category=None, item_cost=None, date_ti
                 except Exception as e:
                     print(e)
 
+    elif theme_id:
+        query_object = Query_CRM_table.objects.filter(theme_id= theme_id).first()
+        empty_object = Query_CRM_table.objects.filter(theme_id = None).first()
+        if query_object:
+            query_object.theme_count= F('theme_count')+1
+            query_object.save()
+        else:
+            if empty_object:
+                empty_object.theme_id=  theme_id
+                empty_object.theme_count= 1
+                empty_object.save()
+            else:
+                data= {'theme_id':str(theme_id), 'theme_count':1}
+                serializer = Query_CRM_Serializer(data=data)
+                try:
+                    if serializer.is_valid(raise_exception=True):
+                        serializer.save()
+                except Exception as e:
+                    print(e)
+
     
 
 @shared_task
-def serving_CRM_count(search=None,category=None,cost=None,item_id_for_cart=None,item_id_for_desc=None,checkout_view_count=None):
+def serving_CRM_count(search=None,category=None,cost=None,item_id_for_cart=None,item_id_for_desc=None,
+                      checkout_view_count=None,theme_id_for_desc=None, theme_category=None):
 
     if search:
         serving_object = Serving_CRM_table.objects.filter(searches=search).first()
@@ -354,6 +373,45 @@ def serving_CRM_count(search=None,category=None,cost=None,item_id_for_cart=None,
                 except Exception as e:
                     print(e)
 
+    elif theme_id_for_desc:
+        serving_object = Serving_CRM_table.objects.filter(theme_description_view=theme_id_for_desc).first()
+        empty_object =  Serving_CRM_table.objects.filter(theme_description_view=None).first()
+        if serving_object:
+            serving_object.theme_description_view_count =F('theme_description_view_count') + 1
+            serving_object.save()
+        else:
+            if empty_object:
+                empty_object.theme_description_view = theme_id_for_desc
+                empty_object.theme_description_view_count = 1
+                empty_object.save()
+            else:
+                data= {'theme_description_view':str(theme_id_for_desc),'theme_description_view_count':1}
+                serializer=  Serving_CRM_Serializer(data=data)
+                try:
+                    if serializer.is_valid(raise_exception=True):
+                        serializer.save()
+                except Exception as e:
+                    print(e)
+
+    elif theme_category:
+        serving_object = Serving_CRM_table.objects.filter(theme_category=theme_category).first()
+        empty_object =  Serving_CRM_table.objects.filter(theme_category=None).first()
+        if serving_object:
+            serving_object.theme_category_count =F('theme_category_count') + 1
+            serving_object.save()
+        else:
+            if empty_object:
+                empty_object.theme_category = theme_category
+                empty_object.theme_category_count = 1
+                empty_object.save()
+            else:
+                data= {'theme_category':str(theme_category),'theme_category_count':1}
+                serializer=  Serving_CRM_Serializer(data=data)
+                try:
+                    if serializer.is_valid(raise_exception=True):
+                        serializer.save()
+                except Exception as e:
+                    print(e)
 
 @shared_task
 def User_CRM_count(age=None, gender=None, income_level=None, pincode=None):

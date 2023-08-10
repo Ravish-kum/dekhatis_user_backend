@@ -206,9 +206,9 @@ class Gettingproducts(generics.ListAPIView):
         except Product.DoesNotExist:
             logger.info("error in getting products")
             return Response({'error':"Product list is empty", 'status_code':409})
-        
+       
         return Response({"message":"all products listed","products":serializer.data,'status_code':200})
-
+ 
 #================================================================================================================================================================
 ''' class gettingdescriptions give details of perticular product by getting myid ( item_id ) and get visualsimilars, images, recommended, varients
     by excluding deleted ones'''
@@ -343,8 +343,8 @@ class ProductSearch(APIView):
         serving_CRM_count(category=clicked_id)
         # clicked_id = request.query_params.get('clicked_id')
         try:
-            product1 = Product.objects.filter(item_categories=clicked_id).exclude(item_availability='deleted').first()
-            if product1 is None:
+            product = Product.objects.filter(item_categories=clicked_id).exclude(item_availability='deleted').first()
+            if product is None:
                 logger.info("no clicked product found")
                 return Response({"error": "product not found","status_code":409})
             
@@ -363,20 +363,30 @@ class ProductSearch(APIView):
         categoryfilter = request.data.get('searched_id')
         serving_CRM_count(search = categoryfilter)
         try:
-            productcheck = Product.objects.filter(item_name__icontains=categoryfilter).exclude(item_availability='deleted').first()
-            if productcheck is None:
+            product = Product.objects.filter(item_name__icontains=categoryfilter).exclude(item_availability='deleted').first()
+            if product is None:
                logger.info("no searched product found")
                return Response({"error": "product not found","status_code":409})
-            else:
-                product = Product.objects.filter(item_name__icontains=categoryfilter).exclude(item_availability='deleted')
-                serializer = SearchSerializer(product, many=True)
-                logger.info("successfully got searched product")
-                
-            return Response({"message":"products by searched on search bar",'searched': serializer.data,'status_code':200})
+           
+            product = Product.objects.filter(item_name__icontains=categoryfilter).exclude(item_availability='deleted')
+            serializer = SearchSerializer(product, many=True)
+            logger.info("successfully got searched product")
+            
+            try:
+                themes=  ThemeFurniture.objects.filter(theme_name__icontains=categoryfilter).exclude(theme_availability='deleted')
+                themeserializer= ThemeSerializer(themes, many = True)
+            except ThemeFurniture.DoesNotExist:
+                logger.info("error in getting themes")
+                return Response({'error':"themes list is empty", 'status_code':409})
+            
+            return Response({"message":"products and themes by searched on bar",'searched': serializer.data,'themes_searched':themeserializer.data, 'status_code':200})
         except Exception as e:
             logger.info('failed to get products from search - error %s',str(e))
             return Response({"error": "product not found by internal issue","status_code":500})
 
+        
+        
+            
 #===================================================================================================================================================
 ''' class roomfilters give the filter of product having similar room ans item_room '''
 
@@ -391,8 +401,18 @@ class Roomfilters(APIView):
             
             product_by_room = Product.objects.filter(item_room=room).exclude(item_availability='deleted')
             serializer = ProductSerializer(product_by_room, many=True)
-            logger.info("product with roomfilter")
-            return Response({"message":"products by room filter icons",'clicked': serializer.data, "status_code":200})
+           
+            try:
+                themes=  ThemeFurniture.objects.filter(theme_room=room).exclude(theme_availability='deleted')
+                themeserializer= ThemeSerializer(themes, many = True)
+               
+            except ThemeFurniture.DoesNotExist:
+                logger.info("error in getting themes")
+                return Response({'error':"themes list is empty", 'status_code':409})
+
+            serving_CRM_count(theme_category=room)
+            logger.info("product and themes with roomfilter")
+            return Response({"message":"products and themes by room filter icons",'clicked': serializer.data,"clicked_theme":themeserializer.data,"status_code":200})
         
         except Exception as e:
             logger.info('failed to get products from same room - error %s',str(e))
@@ -430,6 +450,7 @@ class ThemeDiscriptionsDisplay(APIView):
             return Response({"error":"theme not found","status_code":409})
         
         serializer = ThemeSerializer(themes)
+        serving_CRM_count(theme_id_for_desc=id)
         logger.info("successfully got all themes")
         return Response({
             'themes':serializer.data,
@@ -773,18 +794,20 @@ class Checkout(APIView):
 
             else:
                 logger.info('server error %s',str(serializer.errors))
-                return Response({"error":serializer.errors,"status_code":400}, status=status.HTTP_400_BAD_REQUEST)
-            
-            query_crm(item_id=serializer['item_id'].value)
-            query_crm(shop_id=serializer['shop_id']['id'].value)
-            query_crm(category= serializer['item_categories'].value)
-            query_crm(item_cost=serializer['item_cost'].value)
-            query_crm(date_time=datetime.datetime.now())
-            query_crm(checkout_pincode=serializer['shop_pin'].value)
-            query_crm(customer_id=str(customer_id))
+                return Response({"error":serializer.errors,"status_code":400}, status=status.HTTP_400_BAD_REQUEST)\
+                
+            if cart_items:
+                query_crm(item_id=serializer['item_id'].value)
+                query_crm(shop_id=serializer['shop_id']['id'].value)
+                query_crm(category= serializer['item_categories'].value)
+                query_crm(item_cost=serializer['item_cost'].value)
+                query_crm(date_time=datetime.datetime.now())
+                query_crm(checkout_pincode=serializer['shop_pin'].value)
+                query_crm(customer_id=str(customer_id))
        
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------
         if theme_id is not None:
+            query_crm(theme_id=theme_id)
             themebooking(theme_placing_id_dict,theme_id,customer_id,theme_shop_id_list)
             logger.info('themebooking function calling')
             # calling themebooking function to add a theme order having a dict of placing ids and list of shop ids and customer id

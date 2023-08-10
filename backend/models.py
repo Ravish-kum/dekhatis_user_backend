@@ -214,6 +214,7 @@ class Cancellations_table(models.Model):
 
 class ThemeFurniture(models.Model):
     id =  models.AutoField(primary_key=True)
+    theme_name=models.CharField(max_length=100,null=True,blank=True)
     theme_cost = models.CharField(max_length=100)
     theme_date = models.DateField(auto_now_add=True) 
     theme_revenue = models.CharField(max_length=100)
@@ -306,7 +307,9 @@ class Query_CRM_table(models.Model):
     week_count=models.IntegerField(null=True, blank=True)
     time=models.CharField(max_length=50,null=True, blank=True)
     time_count= models.IntegerField(null=True, blank=True)
-    
+    theme_id=models.CharField(max_length=20,null=True, blank=True)
+    theme_count=models.IntegerField(null=True, blank=True)
+
     class Meta :
         db_table ='query_CRM_table'
 
@@ -322,6 +325,10 @@ class Serving_CRM_table(models.Model):
     checkout_view_count=models.IntegerField(null=True, blank=True)
     description_view= models.CharField(max_length=50,null=True, blank=True)
     description_view_count=models.IntegerField(null=True, blank=True)
+    theme_description_view= models.CharField(max_length=50,null=True, blank=True)
+    theme_description_view_count=models.IntegerField(null=True, blank=True)
+    theme_category=models.CharField(max_length=20,null=True, blank=True)
+    theme_category_count=models.IntegerField(null=True, blank=True)
     class Meta:
         db_table='serving_CRM_table'
  
@@ -334,7 +341,7 @@ class User_CRM_table(models.Model):
     income_level_count=models.IntegerField(null=True, blank=True)
     pincode= models.CharField(max_length=50,null=True, blank=True)
     pincode_count=models.IntegerField(null=True, blank=True)
-
+    individual_expenditure=models.IntegerField(null=True, blank=True)
     class Meta:
         db_table='user_CRM_table'
 
