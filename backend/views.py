@@ -311,9 +311,13 @@ class GettingDescription(generics.ListAPIView):
             del images_url[0:3]
         logger.info("successfully got images url")
         crm_param=getting_the_clicked_product.values()
-        serving_CRM_count(category=crm_param[0]['item_categories'])
-        serving_CRM_count(cost=crm_param[0]['item_cost'])
-        serving_CRM_count(item_id_for_desc=crm_param[0]['item_id'])
+
+        try:
+            serving_CRM_count(category=crm_param[0]['item_categories'])
+            serving_CRM_count(cost=crm_param[0]['item_cost'])
+            serving_CRM_count(item_id_for_desc=crm_param[0]['item_id'])
+        except Exception as e:
+            logger.info('failed in serving_crm_count - error : %s',str(e))
     
         
         
@@ -340,7 +344,11 @@ class GettingDescription(generics.ListAPIView):
 
 class ProductSearch(APIView):
     def get(self, request, clicked_id):
-        serving_CRM_count(category=clicked_id)
+        try:
+            serving_CRM_count(category=clicked_id)
+        except Exception as e:
+            logger.info('failed in serving_crm_count - error : %s',str(e))
+        
         # clicked_id = request.query_params.get('clicked_id')
         try:
             product = Product.objects.filter(item_categories=clicked_id).exclude(item_availability='deleted').first()
@@ -361,7 +369,11 @@ class ProductSearch(APIView):
 
     def post(self, request):
         categoryfilter = request.data.get('searched_id')
-        serving_CRM_count(search = categoryfilter)
+        try:
+            serving_CRM_count(search = categoryfilter)
+        except Exception as e:
+            logger.info('failed in serving_crm_count - error : %s',str(e))
+        
         try:
             product = Product.objects.filter(item_name__icontains=categoryfilter).exclude(item_availability='deleted').first()
             if product is None:
@@ -392,7 +404,11 @@ class ProductSearch(APIView):
 
 class Roomfilters(APIView):
     def get(self,request,room):
-        serving_CRM_count(category=room)
+        try:
+            serving_CRM_count(category=room)
+        except Exception as e:
+            logger.info('failed in serving_crm_count - error : %s',str(e))
+        
         try:
             product_by_room = Product.objects.filter(item_room=room).exclude(item_availability='deleted').first()
             if product_by_room is None:
@@ -410,7 +426,11 @@ class Roomfilters(APIView):
                 logger.info("error in getting themes")
                 return Response({'error':"themes list is empty", 'status_code':409})
 
-            serving_CRM_count(theme_category=room)
+            try:
+                serving_CRM_count(theme_category=room)
+            except Exception as e:
+                logger.info('failed in serving_crm_count - error : %s',str(e))
+            
             logger.info("product and themes with roomfilter")
             return Response({"message":"products and themes by room filter icons",'clicked': serializer.data,"clicked_theme":themeserializer.data,"status_code":200})
         
@@ -450,7 +470,12 @@ class ThemeDiscriptionsDisplay(APIView):
             return Response({"error":"theme not found","status_code":409})
         
         serializer = ThemeSerializer(themes)
-        serving_CRM_count(theme_id_for_desc=id)
+
+        try:
+            serving_CRM_count(theme_id_for_desc=id)
+        except Exception as e:
+            logger.info('failed in serving_crm_count - error : %s',str(e))
+        
         logger.info("successfully got all themes")
         return Response({
             'themes':serializer.data,
@@ -535,7 +560,12 @@ class CustomerCreations(APIView):
         if not payload:
             logger.info('failed to get payload')
             return Response({'error': 'Customer ID not found in token payload',"status_code":401}, status=status.HTTP_401_UNAUTHORIZED)
-        serving_CRM_count(checkout_view_count=True)
+        
+        try:
+            serving_CRM_count(checkout_view_count=True)
+        except Exception as e:
+            logger.info('failed in serving_crm_count - error : %s',str(e))
+        
         already_exist = Customer_table.objects.filter(customer_id=payload).exists()
 
         if already_exist:
@@ -797,17 +827,24 @@ class Checkout(APIView):
                 return Response({"error":serializer.errors,"status_code":400}, status=status.HTTP_400_BAD_REQUEST)\
                 
             if cart_items:
-                query_crm(item_id=serializer['item_id'].value)
-                query_crm(shop_id=serializer['shop_id']['id'].value)
-                query_crm(category= serializer['item_categories'].value)
-                query_crm(item_cost=serializer['item_cost'].value)
-                query_crm(date_time=datetime.datetime.now())
-                query_crm(checkout_pincode=serializer['shop_pin'].value)
-                query_crm(customer_id=str(customer_id))
+                try:
+                    query_crm(item_id=serializer['item_id'].value)
+                    query_crm(shop_id=serializer['shop_id']['id'].value)
+                    query_crm(category= serializer['item_categories'].value)
+                    query_crm(item_cost=serializer['item_cost'].value)
+                    query_crm(date_time=datetime.datetime.now())
+                    query_crm(checkout_pincode=serializer['shop_pin'].value)
+                    query_crm(customer_id=str(customer_id))
+                except Exception as e:
+                    logger.info('failed in query_crm in products - error : %s',str(e))
        
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------
         if theme_id is not None:
-            query_crm(theme_id=theme_id)
+            try:
+                query_crm(theme_id=theme_id)
+            except Exception as e:
+                logger.info('failed in query_crm in themes - error : %s',str(e))
+
             themebooking(theme_placing_id_dict,theme_id,customer_id,theme_shop_id_list)
             logger.info('themebooking function calling')
             # calling themebooking function to add a theme order having a dict of placing ids and list of shop ids and customer id
@@ -1113,7 +1150,7 @@ def CRM_Cart_item_call(request,cart_item_id=None):
     try:
         serving_CRM_count(item_id_for_cart=cart_item_id)
     except Exception as e :
-        print(e)
+        logger.info('failed in serving_crm - error : %s', str(e))
     return HttpResponse('success')
 
 
@@ -1123,13 +1160,16 @@ def CRM_User_call(request):
     gender= request.GET.get('gender')
     income_level= request.GET.get('income_level')
     pincode= request.GET.get('pincode')
-    if age:
-        User_CRM_count(age=age)
-    elif gender:
-        print(gender)
-        User_CRM_count(gender=gender)
-    elif income_level:
-        User_CRM_count(income_level=income_level)
-    else:
-        User_CRM_count(pincode=pincode)
-    return HttpResponse('success')
+    try:
+        if age:
+            User_CRM_count(age=age)
+        elif gender:
+            print(gender)
+            User_CRM_count(gender=gender)
+        elif income_level:
+            User_CRM_count(income_level=income_level)
+        else:
+            User_CRM_count(pincode=pincode)
+        return HttpResponse('success')
+    except Exception as e :
+        logger.info('failed in User_CRM_count - error : %s', str(e))

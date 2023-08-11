@@ -4,6 +4,8 @@ from .serializers import Query_CRM_Serializer, User_CRM_Serializer,Serving_CRM_S
 import datetime
 from django.db.models import Q
 from django.db.models import F
+import logging
+logger = logging.getLogger('my_web')
 #==========================================================================================================================================================
 #================================================================CRM control================================================================================
 
@@ -68,8 +70,9 @@ def time_range(date_time):
         else:
             time_range ="20-24"
  
+ 
  #============================================================================================================================================================
-
+# query_crm function is used in checkout class
 @shared_task
 def query_crm(shop_id=None, item_id=None, category=None, item_cost=None, date_time=None, checkout_pincode=None, customer_id=None, theme_id= None):
     print('his')
@@ -94,7 +97,7 @@ def query_crm(shop_id=None, item_id=None, category=None, item_cost=None, date_ti
                         serializer.save()
                         print('save')
                 except Exception as e:
-                    print(e)
+                    logger.info('error found in quer_Crm function (case shop_id)- error : %s',str(e) )
     elif item_id:
         print('save')
         query_object = Query_CRM_table.objects.filter(item_id= item_id).first()
@@ -115,7 +118,7 @@ def query_crm(shop_id=None, item_id=None, category=None, item_cost=None, date_ti
                         print('save')
                         serializer.save()
                 except Exception as e:
-                    print(e)
+                    logger.info('error found in quer_Crm function (case item_id)- error : %s',str(e) )
     elif category:
         print('save')
         query_object = Query_CRM_table.objects.filter(category= category).first()
@@ -136,7 +139,7 @@ def query_crm(shop_id=None, item_id=None, category=None, item_cost=None, date_ti
                         print('save')
                         serializer.save()
                 except Exception as e:
-                    print(e)
+                    logger.info('error found in quer_Crm function (case category)- error : %s',str(e) )
     elif item_cost:
         print('save')
         query_object = Query_CRM_table.objects.filter(item_cost=find_cost_range(item_cost)).first()
@@ -201,7 +204,7 @@ def query_crm(shop_id=None, item_id=None, category=None, item_cost=None, date_ti
                     if serializer.is_valid(raise_exception=True):
                         serializer.save()
                 except Exception as e:
-                    print(e)
+                    logger.info('error found in quer_Crm function (case checkout_pincode)- error : %s',str(e) )
 
     elif customer_id :
         query_object = Query_CRM_table.objects.filter(customer_id= customer_id).first()
@@ -221,7 +224,7 @@ def query_crm(shop_id=None, item_id=None, category=None, item_cost=None, date_ti
                     if serializer.is_valid(raise_exception=True):
                         serializer.save()
                 except Exception as e:
-                    print(e)
+                    logger.info('error found in quer_Crm function (case customer_id)- error : %s',str(e) )
 
     elif theme_id:
         query_object = Query_CRM_table.objects.filter(theme_id= theme_id).first()
@@ -241,10 +244,11 @@ def query_crm(shop_id=None, item_id=None, category=None, item_cost=None, date_ti
                     if serializer.is_valid(raise_exception=True):
                         serializer.save()
                 except Exception as e:
-                    print(e)
+                    logger.info('error found in quer_Crm function (case theme_id)- error : %s',str(e) )
 
     
-
+# Serving_CRM_count function is used in GettingDescription , ProductSearch (get, post), crm_cart_item_call,
+#                                       Roomfilters, ThemeDiscriptionsDisplay, CustomerCreations (post)
 @shared_task
 def serving_CRM_count(search=None,category=None,cost=None,item_id_for_cart=None,item_id_for_desc=None,
                       checkout_view_count=None,theme_id_for_desc=None, theme_category=None):
@@ -267,7 +271,7 @@ def serving_CRM_count(search=None,category=None,cost=None,item_id_for_cart=None,
                     if serializer.is_valid(raise_exception=True):
                         serializer.save()
                 except Exception as e:
-                    print(e)
+                    logger.info('error found in serving_Crm_count function (case search)- error : %s',str(e) )
             
     elif category:
         serving_object = Serving_CRM_table.objects.filter(category=category).first()
@@ -287,7 +291,7 @@ def serving_CRM_count(search=None,category=None,cost=None,item_id_for_cart=None,
                     if serializer.is_valid(raise_exception=True):
                         serializer.save()
                 except Exception as e:
-                    print(e)
+                    logger.info('error found in serving_Crm_count function (case category)- error : %s',str(e) )
 
     elif item_id_for_cart:
         serving_object = Serving_CRM_table.objects.filter(cart_items=item_id_for_cart).first()
@@ -307,7 +311,7 @@ def serving_CRM_count(search=None,category=None,cost=None,item_id_for_cart=None,
                     if serializer.is_valid(raise_exception=True):
                         serializer.save()
                 except Exception as e:
-                    print(e)
+                    logger.info('error found in serving_Crm_count function (case item_id_for_cart)- error : %s',str(e) )
 
     elif item_id_for_desc:
         serving_object = Serving_CRM_table.objects.filter(description_view=item_id_for_desc).first()
@@ -327,7 +331,7 @@ def serving_CRM_count(search=None,category=None,cost=None,item_id_for_cart=None,
                     if serializer.is_valid(raise_exception=True):
                         serializer.save()
                 except Exception as e:
-                    print(e)
+                     logger.info('error found in serving_Crm_count function (case item_id_for_desc)- error : %s',str(e) )
     
     elif checkout_view_count:
         print('ssf')
@@ -352,26 +356,6 @@ def serving_CRM_count(search=None,category=None,cost=None,item_id_for_cart=None,
                 serving_object.save()
         else:
             pass
-   
-    elif item_id_for_cart:
-        serving_object = Serving_CRM_table.objects.filter(cart_items=item_id_for_cart).first()
-        empty_object= Serving_CRM_table.objects.filter(cart_items=None).first()
-        if serving_object:
-            serving_object.cart_items_count = F('cart_items_count')+1
-            serving_object.save()
-        else:
-            if empty_object:
-                empty_object.cart_items= item_id_for_cart
-                empty_object.cart_items_count=  1
-                empty_object.save()
-            else:
-                data={'cart_items':item_id_for_cart, "cart_items_count":1}
-                serializer= Serving_CRM_Serializer(data=data)
-                try:
-                    if serializer.is_valid(raise_exception=True):
-                        serializer.save()
-                except Exception as e:
-                    print(e)
 
     elif theme_id_for_desc:
         serving_object = Serving_CRM_table.objects.filter(theme_description_view=theme_id_for_desc).first()
@@ -391,7 +375,7 @@ def serving_CRM_count(search=None,category=None,cost=None,item_id_for_cart=None,
                     if serializer.is_valid(raise_exception=True):
                         serializer.save()
                 except Exception as e:
-                    print(e)
+                     logger.info('error found in serving_Crm_count function (case theme_id_for_desc)- error : %s',str(e) )
 
     elif theme_category:
         serving_object = Serving_CRM_table.objects.filter(theme_category=theme_category).first()
@@ -411,8 +395,10 @@ def serving_CRM_count(search=None,category=None,cost=None,item_id_for_cart=None,
                     if serializer.is_valid(raise_exception=True):
                         serializer.save()
                 except Exception as e:
-                    print(e)
+                     logger.info('error found in serving_Crm_count function (case theme_category)- error : %s',str(e) )
 
+
+# User_CRM_count function is found in User_CRM_call function
 @shared_task
 def User_CRM_count(age=None, gender=None, income_level=None, pincode=None):
     
@@ -434,7 +420,7 @@ def User_CRM_count(age=None, gender=None, income_level=None, pincode=None):
                     if serializer.is_valid(raise_exception=True):
                         serializer.save()
                 except Exception as e:
-                    print(e)
+                     logger.info('error found in User_Crm_count function (case age)- error : %s',str(e) )
     
     elif gender:
         print(gender)
@@ -481,4 +467,4 @@ def User_CRM_count(age=None, gender=None, income_level=None, pincode=None):
                     if serializer.is_valid(raise_exception=True):
                         serializer.save()
                 except Exception as e:
-                    print(e)
+                    logger.info('error found in User_Crm_count function (case pincode)- error : %s',str(e) )
