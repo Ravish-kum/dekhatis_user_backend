@@ -74,72 +74,100 @@ def time_range(date_time):
 #============================================================================================================================================================
 # query_crm function is used in checkout class
 @shared_task
-def query_crm(shop_id=None, item_id=None, category=None, item_cost=None, date_time=None, checkout_pincode=None, customer_id=None, theme_id= None):
-    print('his')
+def query_crm(shop_id=None, item_id=None, category=None, item_cost=None, date_time=None, checkout_pincode=None, customer_id=None, theme_id= None, cancellations_customer_id=None):
+    
+    query_object = Query_CRM_table.objects.all()
+    empty_object =[]
+
     if shop_id:
-        print('save')
-        query_object = Query_CRM_table.objects.filter(shop_id= shop_id).first()
-        empty_object = Query_CRM_table.objects.filter(shop_id = None).first()
-        if query_object:
-            print('save2')
-            query_object.shop_count = F('shop_count')+1
-            query_object.save()
-        else:
-            if empty_object:
-                empty_object.shop_id=  shop_id
-                empty_object.shop_count= 1
-                empty_object.save()
-            else:
-                data= {'shop_id':str(shop_id), 'shop_count':1}
-                serializer = Query_CRM_Serializer(data=data)
-                try:
-                    if serializer.is_valid(raise_exception=True):
-                        serializer.save()
-                        print('save')
-                except Exception as e:
-                    logger.info('error found in quer_Crm function (case shop_id)- error : %s',str(e) )
+        local = None        
+        for instance in query_object:
+        
+            if instance.shop_id == str(shop_id):
+                local = instance
+                break
+            elif instance.shop_id == None:
+                empty_object.append(instance)
+
+        if local is not None:
+            local.shop_count =F('shop_count') + 1
+            local.save()
+        
+        elif len(empty_object) != 0:
+            
+            empty_object[0].shop_id=  shop_id
+            empty_object[0].shop_count= 1
+            empty_object[0].save()    
+            empty_object.clear()
+
+        else:    
+
+            data= {'shop_id':str(shop_id), 'shop_count':1}
+            serializer = Query_CRM_Serializer(data=data)
+            try:
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+            except Exception as e:
+                logger.info('error found in quer_Crm function (case shop_id)- error : %s',str(e) )
+
     elif item_id:
-        print('save')
-        query_object = Query_CRM_table.objects.filter(item_id= item_id).first()
-        empty_object = Query_CRM_table.objects.filter(item_id = None).first()
-        if query_object:
-            query_object.item_count = F('item_count')+1
-            query_object.save()
+        local = None
+        for instance in query_object:
+            if instance.item_id == item_id:
+                local = instance
+                break
+            elif instance.item_id == None:
+                empty_object.append(instance)
+
+        if local is not None:
+            local.item_count = F('item_count')+1
+            local.save()
+
+        elif len(empty_object) != 0:
+            empty_object[0].item_id=  item_id
+            empty_object[0].item_count= 1
+            empty_object[0].save()    
+            empty_object.clear()
+
         else:
-            if empty_object:
-                empty_object.item_id=  item_id
-                empty_object.item_count= 1
-                empty_object.save()
-            else:
-                data= {'item_id':str(item_id), 'item_count':1}
-                serializer = Query_CRM_Serializer(data=data)
-                try:
-                    if serializer.is_valid(raise_exception=True):
-                        print('save')
-                        serializer.save()
-                except Exception as e:
-                    logger.info('error found in quer_Crm function (case item_id)- error : %s',str(e) )
+            data= {'item_id':str(item_id), 'item_count':1}
+            serializer = Query_CRM_Serializer(data=data)
+            try:
+                if serializer.is_valid(raise_exception=True):
+                    print('save')
+                    serializer.save()
+            except Exception as e:
+                logger.info('error found in quer_Crm function (case item_id)- error : %s',str(e) )
+
     elif category:
-        print('save')
-        query_object = Query_CRM_table.objects.filter(category= category).first()
-        empty_object = Query_CRM_table.objects.filter(category = None).first()
-        if query_object:
-            query_object.category_count = F('category_count')+1
-            query_object.save()
+        local = None
+        for instance in query_object:
+            if instance.category == category:
+                local = instance
+                break
+            elif instance.category == None:
+                empty_object.append(instance)
+
+        if local is not None:
+            local.category_count = F('category_count')+1
+            local.save()
+
+        elif len(empty_object) != 0:
+            empty_object[0].category=  category
+            empty_object[0].category_count= 1
+            empty_object[0].save()    
+            empty_object.clear()
+
         else:
-            if empty_object:
-                empty_object.category=  category
-                empty_object.category_count= 1
-                empty_object.save()
-            else:
-                data= {'category':str(category), 'category_count':1}
-                serializer = Query_CRM_Serializer(data=data)
-                try:
-                    if serializer.is_valid(raise_exception=True):
-                        print('save')
-                        serializer.save()
-                except Exception as e:
-                    logger.info('error found in quer_Crm function (case category)- error : %s',str(e) )
+            data= {'category':str(category), 'category_count':1}
+            serializer = Query_CRM_Serializer(data=data)
+            try:
+                if serializer.is_valid(raise_exception=True):
+                    print('save')
+                    serializer.save()
+            except Exception as e:
+                logger.info('error found in quer_Crm function (case category)- error : %s',str(e) )
+
     elif item_cost:
         print('save')
         query_object = Query_CRM_table.objects.filter(item_cost=find_cost_range(item_cost)).first()
@@ -152,99 +180,154 @@ def query_crm(shop_id=None, item_id=None, category=None, item_cost=None, date_ti
                 query_object.save()
     
     elif date_time:
+        for instance in query_object[0:12]:
+        
+            if  month_name(date_time) == instance.month :
+                if instance.month_count == None:
+                    instance.month_count =1
+                    instance.save()
+                    
+                else:
+                    instance.month_count=F('month_count') + 1
+                    instance.save()
+            else:
+                pass
+          
+            if week_name(date_time) == instance.week :
+                if instance.week_count == None:
+                    instance.week_count =1
+                    instance.save()
+                    
+                else:
+                    instance.week_count=F('week_count') + 1
+                    instance.save()
+            else:
+                pass
     
-        query_object_month = Query_CRM_table.objects.filter(month=month_name(date_time)).first()
-        
-        if query_object_month:
-            if query_object_month.month_count == None:
-                query_object_month.month_count =1
-                query_object_month.save()
-                print('save')
+            if time_range(date_time) == instance.time :
+                if instance.time_count == None:
+                    instance.time_count =1
+                    instance.save()
+                    
+                else:
+                    instance.time_count=F('time_count') + 1
+                    instance.save()
+                    
             else:
-                query_object_month.month_count=F('month_count') + 1
-                query_object_month.save()
-                
-        query_object_week = Query_CRM_table.objects.filter(week=week_name(date_time)).first()
-        if query_object_week:
-            
-            if query_object_week.week_count == None:
-                query_object_week.week_count =1
-                query_object_week.save()
-            else:
-                query_object_week.week_count=F('week_count') + 1
-                query_object_week.save()
-
-        query_object_time_range = Query_CRM_table.objects.filter(time=time_range(date_time)).first()
-        
-        if query_object_time_range:
-            if query_object_time_range.time_count == None:
-                query_object_time_range.time_count =1
-                query_object_time_range.save()
-
-            else:
-                query_object_time_range.time_count=F('time_count') + 1
-                query_object_time_range.save()
-            
+                pass
 
     elif checkout_pincode:
-        query_object = Query_CRM_table.objects.filter(checkout_pincode= checkout_pincode).first()
-        empty_object = Query_CRM_table.objects.filter(checkout_pincode = None).first()
-        if query_object:
-            query_object.checkout_pincode_count= F('checkout_pincode_count')+1
-            query_object.save()
+        local = None
+        for instance in query_object:
+            if instance.checkout_pincode == checkout_pincode:
+                local = instance
+                break
+            elif instance.checkout_pincode == None:
+                empty_object.append(instance)
+
+        if local is not None:
+            local.checkout_pincode_count = F('checkout_pincode_count')+1
+            local.save()
+
+        elif len(empty_object) != 0:
+            empty_object[0].checkout_pincode=  checkout_pincode
+            empty_object[0].checkout_pincodeunt= 1
+            empty_object[0].save()    
+            empty_object.clear()
+
         else:
-            if empty_object:
-                empty_object.checkout_pincode=  checkout_pincode
-                empty_object.checkout_pincode_count= 1
-                empty_object.save()
-            else:
-                data= {'checkout_pincode':str(checkout_pincode), 'checkout_pincode_count':1}
-                serializer = Query_CRM_Serializer(data=data)
-                try:
-                    if serializer.is_valid(raise_exception=True):
-                        serializer.save()
-                except Exception as e:
-                    logger.info('error found in quer_Crm function (case checkout_pincode) - error : %s',str(e) )
+            data= {'checkout_pincode':str(checkout_pincode), 'checkout_pincode_count':1}
+            serializer = Query_CRM_Serializer(data=data)
+            try:
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+            except Exception as e:
+                logger.info('error found in quer_Crm function (case checkout_pincode) - error : %s',str(e) )
 
     elif customer_id :
-        query_object = Query_CRM_table.objects.filter(customer_id= customer_id).first()
-        empty_object = Query_CRM_table.objects.filter(customer_id = None).first()
-        if query_object:
-            query_object.customer_count = F('customer_count')+1
-            query_object.save()
+        local = None
+        for instance in query_object:
+            if instance.customer_id == customer_id:
+                local = instance
+                break
+            elif instance.customer_id == None:
+                empty_object.append(instance)
+
+        if local is not None:
+            local.customer_count = F('customer_count')+1
+            local.save()
+
+        elif len(empty_object) != 0:
+            empty_object[0].customer_id=  customer_id
+            empty_object[0].customer_count= 1
+            empty_object[0].save()    
+            empty_object.clear()
+
         else:
-            if empty_object:
-                empty_object.customer_id=  customer_id
-                empty_object.customer_count= 1
-                empty_object.save()
-            else:
-                data= {'customer_id':str(customer_id), 'customer_count':1}
-                serializer = Query_CRM_Serializer(data=data)
-                try:
-                    if serializer.is_valid(raise_exception=True):
-                        serializer.save()
-                except Exception as e:
-                    logger.info('error found in quer_Crm function (case customer_id) - error : %s',str(e) )
+            data= {'customer_id':str(customer_id), 'customer_count':1}
+            serializer = Query_CRM_Serializer(data=data)
+            try:
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+            except Exception as e:
+                logger.info('error found in quer_Crm function (case customer_id) - error : %s',str(e) )
 
     elif theme_id:
-        query_object = Query_CRM_table.objects.filter(theme_id= theme_id).first()
-        empty_object = Query_CRM_table.objects.filter(theme_id = None).first()
-        if query_object:
-            query_object.theme_count= F('theme_count')+1
-            query_object.save()
+        local = None
+        for instance in query_object:
+            if instance.theme_id == str(theme_id):
+                local = instance
+                break
+            elif instance.theme_id == None:
+                empty_object.append(instance)
+
+        if local is not None:
+            local.theme_count = F('theme_count')+1
+            local.save()
+
+        elif len(empty_object) != 0:
+            empty_object[0].theme_id=  theme_id
+            empty_object[0].theme_count= 1
+            empty_object[0].save()    
+            empty_object.clear()
+
         else:
-            if empty_object:
-                empty_object.theme_id=  theme_id
-                empty_object.theme_count= 1
-                empty_object.save()
-            else:
-                data= {'theme_id':str(theme_id), 'theme_count':1}
-                serializer = Query_CRM_Serializer(data=data)
-                try:
-                    if serializer.is_valid(raise_exception=True):
-                        serializer.save()
-                except Exception as e:
-                    logger.info('error found in quer_Crm function (case theme_id)- error : %s',str(e) )
+            data= {'theme_id':str(theme_id), 'theme_count':1}
+            serializer = Query_CRM_Serializer(data=data)
+            try:
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+            except Exception as e:
+                logger.info('error found in quer_Crm function (case theme_id)- error : %s',str(e) )
+
+    elif cancellations_customer_id:
+        local = None
+        for instance in query_object:
+            print(cancellations_customer_id)
+            if instance.cancellations_customer_id == str(cancellations_customer_id):
+                local = instance
+                break
+            elif instance.cancellations_customer_id == None:
+                empty_object.append(instance)
+
+        if local is not None:
+            local.cancellations_customer_count = F('cancellations_customer_count')+1
+            local.save()
+
+        elif len(empty_object) != 0:
+            empty_object[0].cancellations_customer_id=  cancellations_customer_id
+            empty_object[0].cancellations_customer_count= 1
+            empty_object[0].save()    
+            empty_object.clear()
+
+        else:
+            data= {'cancellations_customer_id':str(cancellations_customer_id), 'cancellations_customer_count':1}
+            serializer = Query_CRM_Serializer(data=data)
+            try:
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+            except Exception as e:
+                logger.info('error found in quer_Crm function (case cancellations_customer_id) - error : %s',str(e) )
 
     
 # Serving_CRM_count function is used in GettingDescription , ProductSearch (get, post), crm_cart_item_call,
@@ -253,218 +336,296 @@ def query_crm(shop_id=None, item_id=None, category=None, item_cost=None, date_ti
 def serving_CRM_count(search=None,category=None,cost=None,item_id_for_cart=None,item_id_for_desc=None,
                       checkout_view_count=None,theme_id_for_desc=None, theme_category=None):
 
+    serving_object = Serving_CRM_table.objects.all()
+    empty_object =[]
     if search:
-        serving_object = Serving_CRM_table.objects.filter(searches=search).first()
-        empty_object =  Serving_CRM_table.objects.filter(searches=None).first()
-        if serving_object:
-            serving_object.searches_count =F('searches_count') + 1
-            serving_object.save()
+        local = None
+        for instance in serving_object:
+            if instance.searches == search:
+                local = instance
+                break
+            elif instance.searches == None:
+                empty_object.append(instance)
+
+        if local is not None:
+            local.searches_count =F('searches_count') + 1
+            local.save()
+            
+        elif len(empty_object) != 0:
+            empty_object[0].searches = search
+            empty_object[0].searches_count = 1
+            empty_object[0].save()
+            empty_object.clear()
+
         else:
-            if empty_object:
-                empty_object.searches = search
-                empty_object.searches_count = 1
-                empty_object.save()
-            else:
-                data= {'searches':str(search),'searches_count':1}
-                serializer=  Serving_CRM_Serializer(data=data)
-                try:
-                    if serializer.is_valid(raise_exception=True):
-                        serializer.save()
-                except Exception as e:
-                    logger.info('error found in serving_Crm_count function (case search)- error : %s',str(e) )
+            data= {'searches':str(search),'searches_count':1}
+            serializer=  Serving_CRM_Serializer(data=data)
+            try:
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+            except Exception as e:
+                logger.info('error found in serving_Crm_count function (case search)- error : %s',str(e) )
             
     elif category:
-        serving_object = Serving_CRM_table.objects.filter(category=category).first()
-        empty_object =  Serving_CRM_table.objects.filter(category=None).first()
-        if serving_object:
-            serving_object.category_count =F('category_count') + 1
-            serving_object.save()
+        local = None
+        for instance in serving_object:
+            if instance.category == category :
+                local = instance
+                break
+            elif instance.category == None:
+                empty_object.append(instance)
+
+        if local is not None:
+            local.category_count =F('category_count') + 1
+            local.save()
+            
+        elif len(empty_object) != 0:
+            empty_object[0].category = category
+            empty_object[0].category_count = 1
+            empty_object[0].save()
+            empty_object.clear()
+
         else:
-            if empty_object:
-                empty_object.category = category
-                empty_object.category_count = 1
-                empty_object.save()
-            else:
-                data= {'category':str(category),'category_count':1}
-                serializer=  Serving_CRM_Serializer(data=data)
-                try:
-                    if serializer.is_valid(raise_exception=True):
-                        serializer.save()
-                except Exception as e:
-                    logger.info('error found in serving_Crm_count function (case category)- error : %s',str(e) )
+            data= {'category':str(category),'category_count':1}
+            serializer=  Serving_CRM_Serializer(data=data)
+            try:
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+            except Exception as e:
+                logger.info('error found in serving_Crm_count function (case category)- error : %s',str(e) )
 
     elif item_id_for_cart:
-        serving_object = Serving_CRM_table.objects.filter(cart_items=item_id_for_cart).first()
-        empty_object =  Serving_CRM_table.objects.filter(cart_items=None).first()
-        if serving_object:
-            serving_object.cart_items_count =F('cart_items_count') + 1
-            serving_object.save()
+        local =None
+        for instance in serving_object:
+            if item_id_for_cart ==instance.cart_items:
+                local = instance
+                break
+            elif instance.cart_items == None :
+                empty_object.append(instance)                    
+        
+        if local is not None:
+            local.cart_items_count =F('cart_items_count') + 1
+            local.save()
+        elif len(empty_object) != 0:
+            empty_object[0].cart_items = item_id_for_cart
+            empty_object[0].cart_items_count = 1
+            empty_object[0].save()
+            empty_object.clear()
+            
         else:
-            if empty_object:
-                empty_object.cart_items = item_id_for_cart
-                empty_object.cart_items_count = 1
-                empty_object.save()
-            else:
-                data= {'cart_items':str(item_id_for_cart),'cart_items_count':1}
-                serializer=  Serving_CRM_Serializer(data=data)
-                try:
-                    if serializer.is_valid(raise_exception=True):
-                        serializer.save()
-                except Exception as e:
-                    logger.info('error found in serving_Crm_count function (case item_id_for_cart)- error : %s',str(e) )
+            data= {'cart_items':str(item_id_for_cart),'cart_items_count':1}
+            serializer=  Serving_CRM_Serializer(data=data)
+            try:
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+            except Exception as e:
+                logger.info('error found in serving_Crm_count function (case item_id_for_cart)- error : %s',str(e) )
 
     elif item_id_for_desc:
-        serving_object = Serving_CRM_table.objects.filter(description_view=item_id_for_desc).first()
-        empty_object =  Serving_CRM_table.objects.filter(description_view=None).first()
-        if serving_object:
-            serving_object.description_view_count =F('description_view_count') + 1
-            serving_object.save()
+    
+        local = None
+        for instance in serving_object:
+            if item_id_for_desc == instance.description_view :
+                local = instance
+                break
+            elif instance.description_view == None:
+                empty_object.append(instance)
+
+        if local is not None:
+            local.description_view_count =F('description_view_count') + 1
+            local.save()
+            
+        elif len(empty_object) != 0:
+            empty_object[0].description_view = item_id_for_desc
+            empty_object[0].description_view_count = 1
+            empty_object[0].save()
+            empty_object.clear()
+
         else:
-            if empty_object:
-                empty_object.description_view = item_id_for_desc
-                empty_object.description_view_count = 1
-                empty_object.save()
-            else:
-                data= {'description_view':str(item_id_for_desc),'description_view_count':1}
-                serializer=  Serving_CRM_Serializer(data=data)
-                try:
-                    if serializer.is_valid(raise_exception=True):
-                        serializer.save()
-                except Exception as e:
-                     logger.info('error found in serving_Crm_count function (case item_id_for_desc)- error : %s',str(e) )
+            data= {'description_view':str(item_id_for_desc),'description_view_count':1}
+            serializer=  Serving_CRM_Serializer(data=data)
+            try:
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+            except Exception as e:
+                    logger.info('error found in serving_Crm_count function (case item_id_for_desc)- error : %s',str(e) )
     
     elif checkout_view_count:
-        print('ssf')
-        instance = Serving_CRM_table.objects.first()
-        print(instance)
-        if instance:
-            if instance.checkout_view_count ==None:
-                instance.checkout_view_count =1
-            else:
-                instance.checkout_view_count =F('checkout_view_count') + 1
-                instance.save()
-
-    elif cost:
         
-        serving_object = Serving_CRM_table.objects.filter(price_item_view=find_cost_range(cost)).first()
-        if serving_object:
-            if serving_object.price_item_view_count == None:
-                serving_object.price_item_view_count =1
-                serving_object.save()
+            if checkout_view_count == True:
+                print('in if')
+                if serving_object[0].checkout_view_count == None:
+                    try:
+                        serving_object[0].checkout_view_count = 1
+                        serving_object[0].save()
+                    except Exception as e:
+                        logger.info('failed to save checkout count %s',str(e))
+
+            try:     
+                if serving_object:
+                    serving_object[0].checkout_view_count = F('checkout_view_count') + 1
+                    try:
+                        serving_object[0].save()
+                    except Exception as e:
+                        logger.info('failed to save checkout count %s',str(e))
+                else:
+                    logger.info('failed to get serving object in checkout count %s',str(e))
+            except Exception as transaction_error:
+                logger.info('failed to save checkout count %s',str(e))
+                    
+    elif cost:
+        for instance in serving_object[0:21]:
+            if  find_cost_range(cost) == instance.price_item_view :
+                if instance.price_item_view_count == None:
+                    instance.price_item_view_count =1
+                    instance.save()
+                    break
+                else:
+                    instance.price_item_view_count=F('price_item_view_count') + 1
+                    instance.save()
+                    break
             else:
-                serving_object.price_item_view_count=F('price_item_view_count') + 1
-                serving_object.save()
-        else:
-            pass
+                pass
 
     elif theme_id_for_desc:
-        serving_object = Serving_CRM_table.objects.filter(theme_description_view=theme_id_for_desc).first()
-        empty_object =  Serving_CRM_table.objects.filter(theme_description_view=None).first()
-        if serving_object:
-            serving_object.theme_description_view_count =F('theme_description_view_count') + 1
-            serving_object.save()
+        local = None
+        for instance in serving_object:
+            if theme_id_for_desc == instance.theme_description_view :
+                local = instance
+                break
+            elif instance.theme_description_view == None:
+                empty_object.append(instance)
+
+        if local is not None:
+            local.theme_description_view_count =F('theme_description_view_count') + 1
+            local.save()
+            
+        elif len(empty_object) != 0:
+            empty_object[0].theme_description_view = theme_id_for_desc
+            empty_object[0].theme_description_view_count = 1
+            empty_object[0].save()
+            empty_object.clear()
+
         else:
-            if empty_object:
-                empty_object.theme_description_view = theme_id_for_desc
-                empty_object.theme_description_view_count = 1
-                empty_object.save()
-            else:
-                data= {'theme_description_view':str(theme_id_for_desc),'theme_description_view_count':1}
-                serializer=  Serving_CRM_Serializer(data=data)
-                try:
-                    if serializer.is_valid(raise_exception=True):
-                        serializer.save()
-                except Exception as e:
-                     logger.info('error found in serving_Crm_count function (case theme_id_for_desc)- error : %s',str(e) )
+            data= {'theme_description_view':str(theme_id_for_desc),'theme_description_view_count':1}
+            serializer=  Serving_CRM_Serializer(data=data)
+            try:
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+            except Exception as e:
+                logger.info('error found in serving_Crm_count function (case theme_id_for_desc)- error : %s',str(e) )
+                
 
     elif theme_category:
-        serving_object = Serving_CRM_table.objects.filter(theme_category=theme_category).first()
-        empty_object =  Serving_CRM_table.objects.filter(theme_category=None).first()
-        if serving_object:
-            serving_object.theme_category_count =F('theme_category_count') + 1
-            serving_object.save()
+        local =None
+        for instance in serving_object:
+            if theme_category == instance.theme_category :
+                local = instance
+                break
+            elif instance.theme_category == None :
+                empty_object.append(instance)                    
+        
+        if local is not None:
+            local.theme_category_count =F('theme_category_count') + 1
+            local.save()
+        elif len(empty_object) != 0:
+            empty_object[0].theme_category = theme_category
+            empty_object[0].theme_category_count = 1
+            empty_object[0].save()
+            empty_object.clear()
+            
         else:
-            if empty_object:
-                empty_object.theme_category = theme_category
-                empty_object.theme_category_count = 1
-                empty_object.save()
-            else:
-                data= {'theme_category':str(theme_category),'theme_category_count':1}
-                serializer=  Serving_CRM_Serializer(data=data)
-                try:
-                    if serializer.is_valid(raise_exception=True):
-                        serializer.save()
-                except Exception as e:
-                     logger.info('error found in serving_Crm_count function (case theme_category)- error : %s',str(e) )
+            data= {'theme_category':str(theme_category),'theme_category_count':1}
+            serializer=  Serving_CRM_Serializer(data=data)
+            try:
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+            except Exception as e:
+                    logger.info('error found in serving_Crm_count function (case theme_category)- error : %s',str(e) )
 
 
 # User_CRM_count function is found in User_CRM_call function
 @shared_task
 def User_CRM_count(age=None, gender=None, income_level=None, pincode=None):
-    
+    User_object= User_CRM_table.objects.all()
+    empty_object =[]
+
     if age:
-        User_object= User_CRM_table.objects.filter(age=age).first()
-        empty_object = User_CRM_table.objects.filter(age=None).first()
-        if User_object:
-            User_object.age_count = F('age_count')+1
-            User_object.save()
+        local =None
+        for instance in User_object:
+            if age == instance.age :
+                local = instance
+                break
+            elif instance.age == None :
+                empty_object.append(instance)                    
+        
+        if local is not None:
+            local.age_count =F('age_count') + 1
+            local.save()
+        elif len(empty_object) != 0:
+            empty_object[0].age = age
+            empty_object[0].age_count = 1
+            empty_object[0].save()
+            empty_object.clear()
+            
         else:
-            if empty_object:
-                empty_object.age = age
-                empty_object.age_count = 1
-                empty_object.save()
-            else:
-                data = {'age':age, 'age_count': 1}
-                serializer = User_CRM_Serializer(data=data)
-                try:
-                    if serializer.is_valid(raise_exception=True):
-                        serializer.save()
-                except Exception as e:
-                     logger.info('error found in User_Crm_count function (case age)- error : %s',str(e) )
-    
+            data = {'age':age, 'age_count': 1}
+            serializer = User_CRM_Serializer(data=data)
+            try:
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+            except Exception as e:
+                    logger.info('error found in User_Crm_count function (case age)- error : %s',str(e) )
+
     elif gender:
-        print(gender)
-        User_object = User_CRM_table.objects.filter(gender = gender).first()
-        print(User_object)
-        if User_object:
-            if User_object.gender_count==None:
-                User_object.gender_count= 1
-                User_object.save()
-            else:
-                User_object.gender_count= F('gender_count')+1
-                User_object.save()
+        
+        for instance in User_object[0:2]:
+            if gender == instance.gender:
+                if instance.gender_count==None:
+                    instance.gender_count= 1
+                    instance.save()
+                else:
+                    instance.gender_count= F('gender_count')+1
+                    instance.save()
         
 
     elif income_level:
-        print(income_level)
-        User_object=  User_CRM_table.objects.filter(income_level=find_salary_range(income_level)).first()
-        print(find_salary_range(income_level))
-        if User_object:
-            if User_object.income_level_count == None:
-               User_object.income_level_count= 1
-               User_object.save()
+        for instance in User_object[0:21]:
+            if  find_salary_range(income_level) == instance.income_level:
+                if instance.income_level_count == None:
+                    instance.income_level_count =1
+                    instance.save()
+                    break
+                else:
+                    instance.income_level_count=F('income_level_count') + 1
+                    instance.save()
+                    break
             else:
-                User_object.income_level_count =F('income_level_count') +1
-                User_object.save()
-        else:
-            pass
-    
+                pass
+                  
     elif pincode:
-        User_object = User_CRM_table.objects.filter(pincode= pincode).first()
-        empty_object = User_CRM_table.objects.filter(pincode=None).first()
-        if User_object:
-            User_object.pincode_count=F('pincode_count')+1
-            User_object.save()
+        local =None
+        for instance in User_object:
+            if pincode == instance.pincode :
+                local = instance
+                break
+            elif instance.pincode == None :
+                empty_object.append(instance)                    
+        
+        if local is not None:
+            local.pincode_count =F('pincode_count') + 1
+            local.save()
+        elif len(empty_object) != 0:
+            empty_object[0].pincode = pincode
+            empty_object[0].pincode_count = 1
+            empty_object[0].save()
+            empty_object.clear()
+            
         else:
-            if empty_object:
-                empty_object.pincode= pincode
-                empty_object.pincode_count= 1
-                empty_object.save()
-            else:
-                data= {'pincode':pincode, 'pincode_count':1}
-                serializer = User_CRM_Serializer(dataa=data)
-                try:
-                    if serializer.is_valid(raise_exception=True):
-                        serializer.save()
-                except Exception as e:
-                    logger.info('error found in User_Crm_count function (case pincode)- error : %s',str(e) )
+            data= {'pincode':pincode, 'pincode_count':1}
+            serializer = User_CRM_Serializer(dataa=data)
+            try:
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+            except Exception as e:
+                logger.info('error found in User_Crm_count function (case pincode)- error : %s',str(e) )

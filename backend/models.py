@@ -309,7 +309,8 @@ class Query_CRM_table(models.Model):
     time_count= models.IntegerField(null=True, blank=True)
     theme_id=models.CharField(max_length=20,null=True, blank=True)
     theme_count=models.IntegerField(null=True, blank=True)
-
+    cancellations_customer_id =models.CharField(max_length=100,null=True, blank=True)
+    cancellations_customer_count = models.IntegerField(null=True, blank=True)
     class Meta :
         db_table ='query_CRM_table'
 

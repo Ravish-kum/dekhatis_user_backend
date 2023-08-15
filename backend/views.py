@@ -63,7 +63,7 @@ def get_payload_from_token(authorization_header):
     if user already exists : 'user already exists' 
     if invalid credentials : "invaild credentials" 
     successful signup      : 'signup successful' '''
-
+'.objects.'
 @method_decorator(csrf_exempt, name='dispatch')
 class SignupView(APIView):
     serializer_class = UserSerializer
@@ -343,12 +343,12 @@ class ProductSearch(APIView):
         serving_CRM_count(category=clicked_id)
         # clicked_id = request.query_params.get('clicked_id')
         try:
-            product = Product.objects.filter(item_categories=clicked_id).exclude(item_availability='deleted').first()
-            if product is None:
-                logger.info("no clicked product found")
-                return Response({"error": "product not found","status_code":409})
-            
             product = Product.objects.filter(item_categories=clicked_id).exclude(item_availability='deleted')
+            for product in product:
+                if product.item_categories != clicked_id:
+                    logger.info("no clicked product found")
+                    return Response({"error": "product not found","status_code":409})
+            
             serializer = ClickedSerializer(product, many=True)
             logger.info("successfully got clicked product")
             
@@ -360,24 +360,34 @@ class ProductSearch(APIView):
         
 
     def post(self, request):
+        product_error =False
+        theme_error =False
+        
         categoryfilter = request.data.get('searched_id')
         serving_CRM_count(search = categoryfilter)
         try:
-            product = Product.objects.filter(item_name__icontains=categoryfilter).exclude(item_availability='deleted').first()
-            if product is None:
-               logger.info("no searched product found")
-               return Response({"error": "product not found","status_code":409})
-           
             product = Product.objects.filter(item_name__icontains=categoryfilter).exclude(item_availability='deleted')
+            for product in product:
+                if product.item_name != categoryfilter:
+                    logger.info("no searched product found")
+                    product_error = True
+           
             serializer = SearchSerializer(product, many=True)
             logger.info("successfully got searched product")
             
             try:
                 themes=  ThemeFurniture.objects.filter(theme_name__icontains=categoryfilter).exclude(theme_availability='deleted')
+                for themes in themes:
+                    if themes.theme_name != categoryfilter:
+                        logger.info("no searched theme found")
+                        theme_error = True
+           
                 themeserializer= ThemeSerializer(themes, many = True)
             except ThemeFurniture.DoesNotExist:
                 logger.info("error in getting themes")
-                return Response({'error':"themes list is empty", 'status_code':409})
+            
+            if product_error and theme_error == True :
+                return Response({"error": "product and theme not found","status_code":409})
             
             return Response({"message":"products and themes by searched on bar",'searched': serializer.data,'themes_searched':themeserializer.data, 'status_code':200})
         except Exception as e:
@@ -393,24 +403,33 @@ class ProductSearch(APIView):
 class Roomfilters(APIView):
     def get(self,request,room):
         serving_CRM_count(category=room)
+        theme_room_error =False
+        item_room_error =False
         try:
-            product_by_room = Product.objects.filter(item_room=room).exclude(item_availability='deleted').first()
-            if product_by_room is None:
-               logger.info("No product with roomfilter")
-               return Response({"error": "product not found","status_code":409})
-            
             product_by_room = Product.objects.filter(item_room=room).exclude(item_availability='deleted')
+            for product in product_by_room:
+                if product.item_room != room:
+                    logger.info("No product with roomfilter")
+                    item_room_error =True
+            
             serializer = ProductSerializer(product_by_room, many=True)
            
             try:
                 themes=  ThemeFurniture.objects.filter(theme_room=room).exclude(theme_availability='deleted')
                 themeserializer= ThemeSerializer(themes, many = True)
-               
+                for theme in themes:
+                    if theme.theme_room != room:
+                        logger.info("No product with roomfilter")
+                        theme_room_error =True
+                
             except ThemeFurniture.DoesNotExist:
                 logger.info("error in getting themes")
                 return Response({'error':"themes list is empty", 'status_code':409})
 
-            serving_CRM_count(theme_category=room)
+        
+            if theme_room_error and item_room_error == True:
+                return Response({"error": "products and theme with room not found",'status_code':409})
+            
             logger.info("product and themes with roomfilter")
             return Response({"message":"products and themes by room filter icons",'clicked': serializer.data,"clicked_theme":themeserializer.data,"status_code":200})
         
@@ -535,7 +554,9 @@ class CustomerCreations(APIView):
         if not payload:
             logger.info('failed to get payload')
             return Response({'error': 'Customer ID not found in token payload',"status_code":401}, status=status.HTTP_401_UNAUTHORIZED)
+        
         serving_CRM_count(checkout_view_count=True)
+
         already_exist = Customer_table.objects.filter(customer_id=payload).exists()
 
         if already_exist:
@@ -780,7 +801,7 @@ class Checkout(APIView):
             booking_serializer = QuerySerializer(data=data)
             if cart_items:
                 if booking_serializer.is_valid(raise_exception=True):
-                    booking_serializer.save()
+                    #booking_serializer.save()
                     logger.info('order placed by cart')
                     # saving all orders from cart by for loop which will send one opt for every product booked
 
@@ -946,17 +967,18 @@ def cancellations_model(cancellations_request):
     placing_id= cancellations_request
     shop_id =cancellations_table_values["shop_id_id"]
     item_id =cancellations_table_values["item_id_id"]
-    Customer_id=cancellations_table_values["customer_id_id"]  
+    customer_id=cancellations_table_values["customer_id_id"]  
     order_date=order_date_value
     order_status = "cancelled"
     transaction_id =cancellations_table_values["transaction_id"]
     bank_id=cancellations_table_values["bank_id"]
     
-    data ={'placing_id':placing_id,'shop_id':shop_id,'item_id':item_id,'customer_id':Customer_id,'order_date':order_date,'order_status':order_status,'transaction_id':transaction_id,'bank_id':bank_id}
+    data ={'placing_id':placing_id,'shop_id':shop_id,'item_id':item_id,'customer_id':customer_id,'order_date':order_date,'order_status':order_status,'transaction_id':transaction_id,'bank_id':bank_id}
 
     serializer = CancellationsSerializer(data=data)
     if serializer.is_valid(raise_exception=True):
         serializer.save()
+        query_crm(cancellations_customer_id= customer_id)
         logger.info('successfully cancelled order')
     else:
         return Response({"error":serializer.errors, "status_code":400}, status=status.HTTP_400_BAD_REQUEST)
