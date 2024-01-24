@@ -239,8 +239,7 @@ CRONJOBS = [
 
 #celery settings
 
-CELERY_BROKER_URL='redis://default:OohtwjQZ3J4cYtv3Jqfx@containers-us-west-74.railway.app:6520'
-
+CELERY_BROKER_URL= os.environ.get('REDIS_KEY')
 CELERY_ACCEPT_CONTENT=['json']
 
 CELERY_TASK_SERIALIZER='json'

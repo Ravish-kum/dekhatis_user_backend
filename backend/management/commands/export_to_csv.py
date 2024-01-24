@@ -2,6 +2,7 @@ import csv
 import os
 from django.core.management.base import BaseCommand
 from backend.models import Query_table, Cancellations_table, Product, Shop_table, ThemeFurnituresBookings, ThemeFurniture, User, Customer_table,Advertisement_table,Review_table,Dekhatis_Delivery_table,Wood_Servicing_table,Query_CRM_table,Serving_CRM_table,User_CRM_table
+#import pandas as pd
 
 class Command(BaseCommand):
     help = 'Export data to CSV files'
@@ -38,9 +39,18 @@ class Command(BaseCommand):
 
             # Get the data to export
             queryset = model.objects.all()
-
-            # Create the CSV file
             file_path = os.path.join(export_dir, filename)
+
+            '''
+            # pandas implementations
+
+            queryset_list = list(queryset.values())
+            df = pd.DataFrame(queryset_list)
+            pd.to_csv(filepath, df)
+            self.stdout.write(self.style.SUCCESS(f'{model.__name__} data exported to {file_path}'))
+            '''
+            # Create the CSV file
+            
             with open(file_path, 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile)
                 writer.writerow(fields)

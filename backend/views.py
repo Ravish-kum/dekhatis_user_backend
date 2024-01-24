@@ -127,10 +127,7 @@ class Signin(APIView):
             return Response({'error': 'not a user or wrong phone number','status_code':409})
         if myuser is not None:
             logger.info("successfully authenticated a user")
-            user_id_dict = User.objects.values('id').filter(phone_number=phone_number).first()
-            user_id = user_id_dict['id']
-            user = User.objects.get(id=user_id)
-
+            user = User.objects.get(phone_number=phone_number)
             refresh_token = RefreshToken.for_user(user)
             access_token_payload = serializers.serialize('json', [user, ])
             access_token = refresh_token.access_token
